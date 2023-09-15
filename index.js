@@ -1,18 +1,84 @@
 import "dotenv/config";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
+import { DynamoDBClient, PutCommand } from "@aws-sdk/client-dynamodb";
+import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 
-const { AWS_S3_BUCKET_NAME, AWS_DEFAULT_REGION } = process.env;
+// Create service clients
+const s3 = new S3Client({ region: process.env.AWS_REGION });
+const lambda = new LambdaClient({ region: process.env.AWS_REGION });
+const dynamodb = new DynamoDBClient({ region: process.env.AWS_REGION });
+const sns = new SNSClient({ region: process.env.AWS_REGION });
+const sqs = new SQSClient({ region: process.env.AWS_REGION });
 
-const s3Client = new S3Client({ region: AWS_DEFAULT_REGION }); // S3 Client SDK will pick up credentials from the env variables loaded by dotenv
+// 1. Upload a file to S3
+const uploadParams = {
+  Bucket: process.env.S3_BUCKET,
+  Key: process.env.S3_KEY,
+  Body: "Hello, world!",
+};
 
-async function putTextObject(body = "", key = "my_test_object.txt") {
-  const putObjectCommand = new PutObjectCommand({
-    Bucket: AWS_S3_BUCKET_NAME,
-    Key: key,
-    Body: body,
-  });
+s3.send(new PutObjectCommand(uploadParams))
+  .then((data) => {
+    console.log("Upload Success");
 
-  return await s3Client.send(putObjectCommand);
-}
+    // 2. Invoke a Lambda function
+    const lambdaParams = {
+      FunctionName: process.env.LAMBDA_FUNCTION,
+      Payload: JSON.stringify({
+        key: process.env.S3_KEY,
+        bucket: process.env.S3_BUCKET,
+      }),
+    };
 
-putTextObject("My test object").then(console.log).catch(console.error);
+    lambda
+      .send(new InvokeCommand(lambdaParams))
+      .then((data) => {
+        console.log("Lambda Success");
+
+        // 3. Write to DynamoDB
+        const dynamoParams = {
+          TableName: process.env.DYNAMODB_TABLE,
+          Item: {
+            id: { S: "123" },
+            data: { S: "Hello, world!" },
+          },
+        };
+
+        dynamodb
+          .send(new PutCommand(dynamoParams))
+          .then((data) => {
+            console.log("DynamoDB Write Success");
+
+            // 4. Publish to SNS
+            const snsParams = {
+              Message: "Hello, world!",
+              TopicArn: process.env.SNS_TOPIC_ARN,
+            };
+
+            sns
+              .send(new PublishCommand(snsParams))
+              .then((data) => {
+                console.log("SNS Publish Success");
+
+                // 5. Send a message to SQS
+                const sqsParams = {
+                  MessageBody: "Hello, world!",
+                  QueueUrl: process.env.SQS_QUEUE_URL,
+                };
+
+                sqs
+                  .send(new SendMessageCommand(sqsParams))
+                  .then((data) => {
+                    console.log("SQS Send Message Success");
+                  })
+                  .catch((err) => console.log("SQS Error", err));
+              })
+              .catch((err) => console.log("SNS Error", err));
+          })
+          .catch((err) => console.log("DynamoDB Error", err));
+      })
+      .catch((err) => console.log("Lambda Error", err));
+  })
+  .catch((err) => console.log("S3 Upload Error", err));
