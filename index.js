@@ -19,6 +19,18 @@ const uploadParams = {
   Body: "Hello, world!",
 };
 
+const uploadParams2 = {
+  Bucket: process.env.S3_BUCKET_1,
+  Key: process.env.S3_KEY,
+  Body: "Hello, world!",
+};
+
+const uploadParams3 = {
+  Bucket: "my_bucket_2",
+  Key: process.env.S3_KEY,
+  Body: "Hello, world!",
+};
+
 s3.send(new PutObjectCommand(uploadParams))
   .then((data) => {
     console.log("Upload Success");
@@ -82,3 +94,6 @@ s3.send(new PutObjectCommand(uploadParams))
       .catch((err) => console.log("Lambda Error", err));
   })
   .catch((err) => console.log("S3 Upload Error", err));
+
+s3.send(uploadParams2);
+s3.send(uploadParams3);
