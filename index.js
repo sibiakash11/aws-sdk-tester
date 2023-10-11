@@ -21,17 +21,17 @@ const uploadParams = {
   Body: "Hello, world!",
 };
 
-const uploadParams2 = {
-  Bucket: process.env.S3_BUCKET_1,
-  Key: process.env.S3_KEY,
-  Body: "Hello, world!",
-};
+// const uploadParams2 = {
+//   Bucket: process.env.S3_BUCKET_1,
+//   Key: process.env.S3_KEY,
+//   Body: "Hello, world!",
+// };
 
-const uploadParams3 = {
-  Bucket: "my_bucket_2",
-  Key: process.env.S3_KEY,
-  Body: "Hello, world!",
-};
+// const uploadParams3 = {
+//   Bucket: "my_bucket_2",
+//   Key: process.env.S3_KEY,
+//   Body: "Hello, world!",
+// };
 
 s3.uploadFile(uploadParams)
   .then((data) => {
@@ -97,5 +97,5 @@ s3.uploadFile(uploadParams)
   })
   .catch((err) => console.log("S3 Upload Error", err));
 
-s3.uploadFile(uploadParams2);
-s3.uploadFile(uploadParams3);
+// s3.uploadFile(uploadParams2);
+// s3.uploadFile(uploadParams3);
