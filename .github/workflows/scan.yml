@@ -1,0 +1,31 @@
+name: scan
+on:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: policy-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'
+      - name: Install Slauth
+        run: npm install -g @slauth.io/slauth
+      - name: Run Slauth
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: slauth scan -p aws -o ./policies.json .
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: policies
+          path: policies.json
