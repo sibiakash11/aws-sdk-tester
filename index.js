@@ -33,6 +33,14 @@ const uploadParams3 = {
   Body: "Hello, world!",
 };
 
+
+const uploadParams3 = {
+  Bucket: "my_bucket_2",
+  Key: process.env.S3_KEY,
+  Body: "Hello, world!",
+};
+
+
 s3.uploadFile(uploadParams)
   .then((data) => {
     console.log("Upload Success");
